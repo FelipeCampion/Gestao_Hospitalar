@@ -1,0 +1,12 @@
+create database Gestao_Hospitalar
+character set utf8mb4
+collate utf8mb4_0900_ai_ci;
+
+use Gestao_Hospitalar;
+
+create table medicos(
+id_medico int auto_increment primary key,
+nome_medico vachar(100) not null, 
+crm varchar(50) unique not null,
+especialidade varchar(50) not null
+);
