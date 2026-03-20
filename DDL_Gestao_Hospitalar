@@ -4,9 +4,45 @@ collate utf8mb4_0900_ai_ci;
 
 use Gestao_Hospitalar;
 
+-- Criação da tabela de medicos
 create table medicos(
 id_medico int auto_increment primary key,
-nome_medico vachar(100) not null, 
+nome_medico varchar(100) not null, 
 crm varchar(50) unique not null,
 especialidade varchar(50) not null
 );
+
+-- Criação da tabela de pacientes
+create table pacientes(
+id_paciente int auto_increment primary key,
+nome_paciente varchar(100) not null,
+cpf varchar(11) unique not null,
+tipo_sanguineo enum('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')
+);
+
+-- Criação da tabela de consultas
+create table consultas(
+id_consulta int auto_increment primary key,
+id_paciente int,
+id_medico int,
+data_consulta datetime not null,
+status_consulta enum('Agendada', 'Realizada', 'Cancelada') default 'Agendada',
+observacoes_pre_triagem text
+);
+
+-- Criação da tabela de prontuarios
+create table prontuarios(
+id_prontuario int auto_increment primary key,
+id_consulta int unique,
+diagnostico text not null,
+prescricao text,
+data_registro timestamp default current_timestamp
+);
+
+-- Criação das Foreign Keys
+alter table consultas
+add constraint fk_cons_med foreign key (id_medico) references medicos (id_medico),
+add constraint fk_cons_pac foreign key (id_paciente) references pacientes (id_paciente);
+
+alter table prontuarios
+add constraint fk_pron_cons foreign key (id_consulta) references consultas (id_consulta);
