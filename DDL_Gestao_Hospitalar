@@ -84,6 +84,14 @@ prazo_retorno_dias int,
 observacoes_medicas text
 );
 
+create table estado_critico(
+id_estado int auto_increment primary key,
+id_paciente int,
+id_evolucao int,
+status_progresso enum('Melhora Acentuada', 'Estável', 'Piora', 'Cura/Alta') not null,
+data_alerta timestamp default current_timestamp
+);
+
 -- Criação das Foreign Keys
 alter table consultas
 add constraint fk_cons_med foreign key (id_medico) references medicos (id_medico),
@@ -103,9 +111,13 @@ add constraint fk_ped_pac foreign key (id_paciente) references pacientes (id_pac
 alter table resultados_exames
 add constraint fk_res_ped foreign key (id_pedido) references pedidos_exames (id_pedido);
 
-alter table evolucao_paciente 
-add constraint fk_evo_pac foreign key (id_paciente) references pacientes (id_paciente);
+alter table evolucao_paciente
+add constraint fk_evo_pac foreign key (id_paciente) references pacientes (id_paciente),
 add constraint fk_evo_cons foreign key (id_consulta) references consultas (id_consulta);
+
+alter table estado_critico
+add constraint fk_est_pac foreign key (id_paciente) references pacientes (id_paciente),
+add constraint fk_est_evo foreign key (id_evolucao) references evolucao_paciente (id_evolucao);
 
 -- Triggers
 
@@ -116,22 +128,16 @@ after insert on resultados_exames
 for each row
 begin
     declare v_prazo date;
-  
-    select prazo_conclusao into v_prazo 
-    from pedidos_exames 
-    where id_pedido = new.id_pedido;
+    select prazo_conclusao into v_prazo from pedidos_exames where id_pedido = new.id_pedido;
 
     if new.data_finalizacao > v_prazo then
-        update pedidos_exames 
-        set status_exame = 'Atrasado' 
-        where id_pedido = new.id_pedido;
+        update pedidos_exames set status_exame = 'Atrasado' where id_pedido = new.id_pedido;
     else
-        update pedidos_exames 
-        set status_exame = 'Finalizado' 
-        where id_pedido = new.id_pedido;
+        update pedidos_exames set status_exame = 'Finalizado' where id_pedido = new.id_pedido;
     end if;
 end //
 delimiter ;
+
 
 delimiter //
 create trigger trg_alerta_piora
@@ -142,6 +148,10 @@ begin
         update pacientes 
         set nome_paciente = concat('[ALERTA!]', nome_paciente) 
         where id_paciente = new.id_paciente;
+        
+        insert into estado_critico (id_paciente, id_evolucao, status_progresso)
+        values (new.id_paciente, new.id_evolucao, new.status_progresso);
+
     end if;
 end //
 delimiter ;
