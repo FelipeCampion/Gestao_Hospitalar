@@ -74,6 +74,7 @@ dosagem varchar(50) not null,
 frequencia varchar(50) not null
 );
 
+-- Criação da tabela de acompanhamento de evolução dos pacientes
 create table evolucao_paciente(
 id_evolucao int auto_increment primary key,
 id_paciente int,
@@ -84,6 +85,7 @@ prazo_retorno_dias int,
 observacoes_medicas text
 );
 
+-- Criação da tabela de registro de pacientes em estado crítico
 create table estado_critico(
 id_estado int auto_increment primary key,
 id_paciente int,
@@ -138,7 +140,7 @@ begin
 end //
 delimiter ;
 
-
+-- Criação da trigger de registro de alertas no estado do paciente
 delimiter //
 create trigger trg_alerta_piora
 after insert on evolucao_paciente
