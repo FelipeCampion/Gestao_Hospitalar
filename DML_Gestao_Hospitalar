@@ -1,5 +1,3 @@
-``` sql
-
 use Gestao_Hospitalar;
 
 -- Inserindo dados base
@@ -31,5 +29,3 @@ values (1, 'Hemograma completo sem alterações graves.');
 
 -- Verificação de status e se mudou sozinho para 'Atrasado'
 select status_exame from pedidos_exames where id_pedido = 1;
-
-```
