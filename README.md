@@ -1,4 +1,4 @@
-# 🏥 Gestão-Hospitalar-V2 🩺💉📊
+# 🏥 Gestão-Hospitalar 🩺💉📊
 
 ![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Concluído-brightgreen?style=for-the-badge)
