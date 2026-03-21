@@ -1,3 +1,5 @@
+``` sql
+
 use Gestao_Hospitalar;
 
 -- Inserindo dados base
