@@ -1,42 +1,48 @@
-🏥 Gestão-Hospitalar 🩺💉📊
-Sistema de Inteligência Relacional para Gestão Clínica, Automação Laboratorial e Segurança do Paciente.
+# 🏥 Gestão-Hospitalar-V2 🩺💉📊
 
-Este projeto apresenta uma infraestrutura robusta de banco de dados voltada para a digitalização de fluxos hospitalares. O diferencial aqui é a camada de monitoramento clínico ativo, onde o banco de dados não apenas armazena prontuários, mas fiscaliza prazos laboratoriais e sinaliza riscos à vida em tempo real.
+![MySQL](https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Concluído-brightgreen?style=for-the-badge)
 
-Arquitetura e Tecnologia
-Engine: MySQL 8.0+
+**Sistema de Inteligência Relacional para Gestão Clínica, Automação Laboratorial e Segurança do Paciente.**
 
-Conceitos Aplicados: Relacionamentos N:N (Prescrições), Integridade Referencial Estrita, Automação via Triggers e Log de Eventos Críticos.
+Este projeto apresenta uma infraestrutura robusta de banco de dados voltada para a digitalização de fluxos hospitalares. O diferencial aqui é a **camada de monitoramento clínico ativo**, onde o banco de dados não apenas armazena prontuários, mas fiscaliza prazos laboratoriais e sinaliza riscos à vida em tempo real através de gatilhos automáticos.
 
-Foco: Segurança do paciente, eficiência laboratorial e rastreabilidade de diagnósticos.
+## Arquitetura e Tecnologia
 
-Inteligência e Automações Implementadas
-Fluxo Laboratorial Preditivo (Triggers)
-Monitoramento de SLA: Através da trigger trg_finalizar_exame, o sistema atua como um auditor de qualidade. Ele compara a data_finalizacao com o prazo_conclusao. Caso o laboratório atrase, o status do exame é alterado para 'Atrasado' sem intervenção humana, permitindo a extração de KPIs de eficiência.
+* **Engine:** MySQL 8.0+
+* **Conceitos Aplicados:** Relacionamentos N:N (Itens de Prescrição), Integridade Referencial Estrita, Automação via Triggers e Log de Eventos Críticos (Audit Trail).
+* **Foco:** Segurança do paciente, conformidade com prazos (SLA) e rastreabilidade de diagnósticos.
 
-Algoritmo de Alerta Clínico (Segurança do Paciente)
-A trigger trg_alerta_piora implementa um protocolo de resposta rápida:
+---
 
-Sinalização Visual: Altera dinamicamente o nome_paciente inserindo a flag [ALERTA!], garantindo que qualquer consulta simples ao banco destaque o paciente em risco.
+## Inteligência e Automações Implementadas
 
-Audit Trail de Risco: Alimenta automaticamente a tabela estado_critico, criando uma fila de prioridade para a equipe de triagem baseada na última evolução médica registrada.
+### Fluxo Laboratorial Auditado (Triggers)
+* **Monitoramento de SLA:** Através da trigger `trg_finalizar_exame`, o sistema atua como um auditor de qualidade. Ele compara a data de finalização com o prazo estipulado no pedido. Caso o laboratório entregue o resultado fora da janela prevista, o status é alterado automaticamente para **'Atrasado'**, permitindo a geração de indicadores de performance (KPIs) hospitalares.
 
-Estrutura de Dados Avançada
-Normalização de Prescrições: Implementação de tabela intermediária (itens_prescricao) para gerenciar múltiplos medicamentos por prontuário, garantindo a organização da farmácia hospitalar.
+### Algoritmo de Alerta Clínico (Segurança do Paciente)
+A trigger `trg_alerta_piora` implementa um protocolo de resposta rápida para casos de declínio clínico:
+* **Sinalização Visual de Risco:** Altera dinamicamente o registro do paciente inserindo a flag `[ALERTA!]` no nome, garantindo que qualquer consulta ao banco destaque visualmente o paciente em risco para a recepção e enfermagem.
+* **Triagem Automática:** Alimenta simultaneamente a tabela `estado_critico`, criando uma fila de prioridade para a equipe médica baseada estritamente em dados de evolução inseridos no prontuário.
 
-Ciclo de Evolução: Suporte ao acompanhamento contínuo do paciente (Follow-up), permitindo analisar se os tratamentos aplicados estão resultando em 'Melhora' ou 'Piora'.
+### Gestão Estruturada de Medicamentos
+* **Normalização de Farmácia:** Implementação de relacionamento entre medicamentos e prontuários via tabela `itens_prescricao`, permitindo múltiplas dosagens e frequências por atendimento, evitando erros de medicação e facilitando o controle de estoque.
 
-Como Reproduzir os Testes
-Execute o script de estrutura (DDL) para criar o ecossistema hospitalar.
+---
 
-Utilize o script de DML de Teste para inserir um médico, um paciente e uma consulta.
+## Como Reproduzir os Testes
 
-Simule uma falha clínica inserindo uma evolução com status 'Piora':
+1.  Execute o script de estrutura (**DDL**) para criar o ecossistema hospitalar e as regras de negócio.
+2.  Utilize o script de **DML de Teste** para popular médicos e pacientes.
+3.  Simule um alerta de risco inserindo uma evolução com status de piora:
+4.  Valide a inteligência do banco executando as consultas:
 
-SQL
+```sql
 INSERT INTO evolucao_paciente (id_paciente, id_consulta, status_progresso) 
 VALUES (1, 1, 'Piora');
-Valide a automação verificando o alerta no cadastro:
 
-SQL
+-- Verificar fila de triagem crítica
+SELECT * FROM estado_critico;
+
+-- Verificar sinalização no cadastro
 SELECT nome_paciente FROM pacientes WHERE id_paciente = 1;
