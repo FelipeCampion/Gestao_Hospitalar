@@ -30,13 +30,58 @@ status_consulta enum('Agendada', 'Realizada', 'Cancelada') default 'Agendada',
 observacoes_pre_triagem text
 );
 
--- Criação da tabela de prontuarios
+-- Criação da tabela de pedidos dos exames
+create table pedidos_exames(
+id_pedido int auto_increment primary key,
+id_medico int,
+id_paciente int,
+tipo_exame enum('Sangue', 'Raio-x', 'Tomografia', 'Urina') not null,
+data_solicitacao timestamp default current_timestamp,
+prazo_conclusao date not null,
+status_exame enum('Finalizado', 'Atrasado', 'Cancelado', 'Pendente') default 'Pendente'
+);
+
+-- Criação da tabela dos resultados dos exames
+create table resultados_exames(
+id_resultado int auto_increment primary key,
+id_pedido int unique,
+descricao_laudo text,
+data_finalizacao timestamp default current_timestamp
+);
+
+-- Criação da tabela dos prontuarios
 create table prontuarios(
 id_prontuario int auto_increment primary key,
 id_consulta int unique,
 diagnostico text not null,
 prescricao text,
 data_registro timestamp default current_timestamp
+);
+
+-- Criação da tabela de medicamentos
+create table medicamentos(
+id_medicamento int auto_increment primary key,
+nome_medicamento varchar(100) not null,
+unidade_medida varchar(20) default 'mg'
+);
+
+-- Criação da tabela de itens e prescrição
+create table itens_prescricao(
+id_item int auto_increment primary key,
+id_prontuario int,
+id_medicamento int,
+dosagem varchar(50) not null,
+frequencia varchar(50) not null
+);
+
+create table evolucao_paciente(
+id_evolucao int auto_increment primary key,
+id_paciente int,
+id_consulta int,
+status_progresso enum('Melhora Acentuada', 'Estável', 'Piora', 'Cura/Alta') not null,
+necessita_retorno boolean default false,
+prazo_retorno_dias int,
+observacoes_medicas text
 );
 
 -- Criação das Foreign Keys
@@ -46,3 +91,57 @@ add constraint fk_cons_pac foreign key (id_paciente) references pacientes (id_pa
 
 alter table prontuarios
 add constraint fk_pron_cons foreign key (id_consulta) references consultas (id_consulta);
+
+alter table itens_prescricao
+add constraint fk_ip_pron foreign key (id_prontuario) references prontuarios (id_prontuario),
+add constraint fk_ip_medi foreign key (id_medicamento) references medicamentos (id_medicamento);
+
+alter table pedidos_exames
+add constraint fk_ped_med foreign key (id_medico) references medicos (id_medico),
+add constraint fk_ped_pac foreign key (id_paciente) references pacientes (id_paciente);
+
+alter table resultados_exames
+add constraint fk_res_ped foreign key (id_pedido) references pedidos_exames (id_pedido);
+
+alter table evolucao_paciente 
+add constraint fk_evo_pac foreign key (id_paciente) references pacientes (id_paciente);
+add constraint fk_evo_cons foreign key (id_consulta) references consultas (id_consulta);
+
+-- Triggers
+
+-- Criação da trigger de monitoramento de conclusão de exames e se estão atrasados
+delimiter //
+create trigger trg_finalizar_exame
+after insert on resultados_exames
+for each row
+begin
+    declare v_prazo date;
+  
+    select prazo_conclusao into v_prazo 
+    from pedidos_exames 
+    where id_pedido = new.id_pedido;
+
+    if new.data_finalizacao > v_prazo then
+        update pedidos_exames 
+        set status_exame = 'Atrasado' 
+        where id_pedido = new.id_pedido;
+    else
+        update pedidos_exames 
+        set status_exame = 'Finalizado' 
+        where id_pedido = new.id_pedido;
+    end if;
+end //
+delimiter ;
+
+delimiter //
+create trigger trg_alerta_piora
+after insert on evolucao_paciente
+for each row
+begin
+    if new.status_progresso = 'Piora' then
+        update pacientes 
+        set nome_paciente = concat('[ALERTA!]', nome_paciente) 
+        where id_paciente = new.id_paciente;
+    end if;
+end //
+delimiter ;
