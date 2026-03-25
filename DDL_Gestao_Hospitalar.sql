@@ -28,7 +28,7 @@ id_paciente int,
 frequencia_cardiaca int,
 pressao_sistolica int,
 temperatura decimal(4,1),
-data_medicao timestamp default current_timestamp,
+data_medicao timestamp default current_timestamp
 );
 
 -- Criação da tabela de consultas
@@ -116,31 +116,32 @@ status_atendimento enum('Pendente', 'Em curso', 'Resolvido') default 'Resolvido'
 );
 
 -- Criação das Foreign Keys
-alter table sinais_vitais
-add constraint fk_sina_cons foreign key (id_consulta) references consultas(id_consulta),
-add constraint fk_sina_pac foreign key (id_paciente) references pacientes(id_paciente);
 
 alter table consultas
 add constraint fk_cons_med foreign key (id_medico) references medicos (id_medico),
 add constraint fk_cons_pac foreign key (id_paciente) references pacientes (id_paciente);
 
-alter table prontuarios
-add constraint fk_pron_cons foreign key (id_consulta) references consultas (id_consulta);
-
-alter table itens_prescricao
-add constraint fk_ip_pron foreign key (id_prontuario) references prontuarios (id_prontuario),
-add constraint fk_ip_medi foreign key (id_medicamento) references medicamentos (id_medicamento);
-
 alter table pedidos_exames
 add constraint fk_ped_med foreign key (id_medico) references medicos (id_medico),
 add constraint fk_ped_pac foreign key (id_paciente) references pacientes (id_paciente);
 
-alter table resultados_exames
-add constraint fk_res_ped foreign key (id_pedido) references pedidos_exames (id_pedido);
+alter table sinais_vitais
+add constraint fk_sina_cons foreign key (id_consulta) references consultas(id_consulta),
+add constraint fk_sina_pac foreign key (id_paciente) references pacientes(id_paciente);
+
+alter table prontuarios
+add constraint fk_pron_cons foreign key (id_consulta) references consultas (id_consulta);
 
 alter table evolucao_paciente
 add constraint fk_evo_pac foreign key (id_paciente) references pacientes (id_paciente),
 add constraint fk_evo_cons foreign key (id_consulta) references consultas (id_consulta);
+
+alter table resultados_exames
+add constraint fk_res_ped foreign key (id_pedido) references pedidos_exames (id_pedido);
+
+alter table itens_prescricao
+add constraint fk_ip_pron foreign key (id_prontuario) references prontuarios (id_prontuario),
+add constraint fk_ip_medi foreign key (id_medicamento) references medicamentos (id_medicamento);
 
 alter table estado_critico
 add constraint fk_est_pac foreign key (id_paciente) references pacientes (id_paciente),
