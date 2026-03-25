@@ -20,6 +20,17 @@ cpf varchar(11) unique not null,
 tipo_sanguineo enum('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')
 );
 
+-- Criação da tabela de registro das medições de triagem dos pacientes
+create table sinais_vitais(
+id_sinal int auto_increment primary key,
+id_consulta int,
+id_paciente int,
+frequencia_cardiaca int,
+pressao_sistolica int,
+temperatura decimal(4,1),
+data_medicao timestamp default current_timestamp,
+);
+
 -- Criação da tabela de consultas
 create table consultas(
 id_consulta int auto_increment primary key,
@@ -94,7 +105,21 @@ status_progresso enum('Melhora Acentuada', 'Estável', 'Piora', 'Cura/Alta') not
 data_alerta timestamp default current_timestamp
 );
 
+-- Criação da tabela de registro de alertas de medições de pacientes
+create table alertas_criticos(
+id_alerta int auto_increment primary key,
+id_paciente int,
+tipo_alerta varchar(50),
+descricao text,
+data_alerta timestamp default current_timestamp,
+status_atendimento enum('Pendente', 'Em curso', 'Resolvido') default 'Resolvido'
+);
+
 -- Criação das Foreign Keys
+alter table sinais_vitais
+add constraint fk_sina_cons foreign key (id_consulta) references consultas(id_consulta),
+add constraint fk_sina_pac foreign key (id_paciente) references pacientes(id_paciente);
+
 alter table consultas
 add constraint fk_cons_med foreign key (id_medico) references medicos (id_medico),
 add constraint fk_cons_pac foreign key (id_paciente) references pacientes (id_paciente);
@@ -120,6 +145,9 @@ add constraint fk_evo_cons foreign key (id_consulta) references consultas (id_co
 alter table estado_critico
 add constraint fk_est_pac foreign key (id_paciente) references pacientes (id_paciente),
 add constraint fk_est_evo foreign key (id_evolucao) references evolucao_paciente (id_evolucao);
+
+alter table alertas_criticos
+add constraint fk_alert_pac foreign key (id_paciente) references pacientes (id_paciente);
 
 -- Triggers
 
@@ -156,4 +184,19 @@ begin
 
     end if;
 end //
+delimiter ;
+
+-- Criação da trigger de registro de alertas criticos quanto a medidadas do paciente
+delimiter //
+create trigger alerta_critico_automatico
+after insert on sinais_vitais
+for each row
+begin
+    -- Lógica de Alerta: Frequência Cardíaca ( < 50 ou > 120 ) ou Febre Alta ( > 39 )
+    if new.frequencia_cardiaca < 50 or new.frequencia_cardiaca > 120 or new.temperatura > 39 then
+    insert into alertas_criticos (id_paciente, tipo_alerta, descricao, status_atendimento)
+        values (new.id_paciente, 'Risco Clínico Médio/Alto', concat('[ALERTA!] Freq. Card: ', new.frequencia_cardiaca, ' bpm | Temp: ', new.temperatura, '°C'), 'Pendente');
+    end if;
+end //
+
 delimiter ;
